@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeExec AI — Sandboxed Kernel Code Execution</title>
+    <style>
+        :root {
+            --bg: #090a0f;
+            --card-bg: #11141e;
+            --border: #1e2436;
+            --accent: #00f2fe;
+            --accent-green: #00e676;
+            --accent-red: #ff1744;
+            --accent-amber: #ff9100;
+            --text: #e6edf3;
+            --muted: #7d8590;
+            --mono: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background: var(--bg); color: var(--text); padding: 24px; min-height: 100vh; }
+        header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 18px; margin-bottom: 24px; }
+        .title-group { display: flex; align-items: center; gap: 12px; }
+        .logo-tag { background: linear-gradient(135deg, var(--accent), #4facfe); color: #000; font-weight: 800; font-size: 0.75rem; padding: 4px 8px; border-radius: 4px; font-family: var(--mono); }
+        .sys-tag { background: rgba(0, 242, 254, 0.08); border: 1px solid rgba(0, 242, 254, 0.2); color: var(--accent); padding: 6px 14px; border-radius: 6px; font-size: 0.8rem; font-family: var(--mono); }
+        .workspace { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 24px; }
+        .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+        .card-header { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; }
+        .presets { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+        .btn-preset { background: #161b29; border: 1px solid var(--border); color: var(--text); padding: 6px 12px; font-size: 0.78rem; border-radius: 6px; cursor: pointer; transition: 0.2s; }
+        .btn-preset:hover { border-color: var(--accent); color: var(--accent); }
+        textarea { width: 100%; height: 320px; background: #06070a; border: 1px solid var(--border); border-radius: 8px; padding: 14px; color: #a5d6ff; font-family: var(--mono); font-size: 0.88rem; line-height: 1.5; resize: none; }
+        textarea:focus { outline: none; border-color: var(--accent); }
+        .config-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 16px 0; }
+        .config-box label { display: block; font-size: 0.75rem; color: var(--muted); text-transform: uppercase; margin-bottom: 6px; }
+        .config-box input { width: 100%; background: #06070a; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; color: var(--text); font-family: var(--mono); }
+        .btn-run { width: 100%; background: linear-gradient(135deg, var(--accent), #4facfe); color: #000; border: none; padding: 14px; border-radius: 8px; font-weight: 700; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; transition: 0.2s; }
+        .btn-run:hover { opacity: 0.9; }
+        .metric-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 18px; }
+        .metric-card { background: #06070a; border: 1px solid var(--border); border-radius: 8px; padding: 14px; text-align: center; }
+        .metric-num { font-size: 1.4rem; font-weight: 700; font-family: var(--mono); color: var(--accent); }
+        .metric-label { font-size: 0.7rem; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
+        .console-stream { background: #06070a; border: 1px solid var(--border); border-radius: 8px; height: 320px; padding: 14px; font-family: var(--mono); font-size: 0.82rem; color: #8b949e; overflow-y: auto; white-space: pre-wrap; line-height: 1.5; }
+        .badge { padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; font-family: var(--mono); }
+        .badge-green { background: rgba(0, 230, 118, 0.15); color: var(--accent-green); border: 1px solid var(--accent-green); }
+        .badge-red { background: rgba(255, 23, 68, 0.15); color: var(--accent-red); border: 1px solid var(--accent-red); }
+        .badge-amber { background: rgba(255, 145, 0, 0.15); color: var(--accent-amber); border: 1px solid var(--accent-amber); }
+    </style>
+</head>
+<body>
+<header>
+    <div class="title-group">
+        <span class="logo-tag">POSIX C + NODE.JS</span>
+        <h2>SafeExec AI: Cloud Kernel Code Sandboxing Platform</h2>
+    </div>
+    <div class="sys-tag">Ubuntu Linux Kernel POSIX Subsystem Active</div>
+</header>
+<div class="workspace">
+    <div class="card">
+        <div class="card-header">Untrusted Code Ingestion Console</div>
+        <div class="presets">
+            <button class="btn-preset" onclick="setPreset(1)">Clean Matrix Math</button>
+            <button class="btn-preset" onclick="setPreset(2)">Infinite Loop DoS</button>
+            <button class="btn-preset" onclick="setPreset(3)">Memory Allocation Overrun</button>
+            <button class="btn-preset" onclick="setPreset(4)">Null Pointer Crash</button>
+            <button class="btn-preset" onclick="setPreset(5)">Division By Zero</button>
+            <button class="btn-preset" onclick="setPreset(6)">Wall-Clock Sleep Hang</button>
+        </div>
+        <textarea id="code-input"></textarea>
+        <div class="config-row">
+            <div class="config-box">
+                <label>RLIMIT_CPU Ceiling (Seconds)</label>
+                <input type="number" id="cpu-sec" value="1" min="1" max="5">
+            </div>
+            <div class="config-box">
+                <label>RLIMIT_AS Virtual RAM Ceiling (MB)</label>
+                <input type="number" id="mem-mb" value="64" min="16" max="512">
+            </div>
+        </div>
+        <button class="btn-run" onclick="executeUntrustedCode()">Dispatch to Kernel Sandbox</button>
+    </div>
+    <div class="card">
+        <div class="card-header">
+            <span>Hardware Execution Telemetry</span>
+            <span id="status-badge" class="badge badge-green">READY</span>
+        </div>
+        <div class="metric-grid">
+            <div class="metric-card">
+                <div class="metric-num" id="metric-pid">--</div>
+                <div class="metric-label">Harvested PID</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-num" id="metric-time">--</div>
+                <div class="metric-label">Execution Time</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-num" id="metric-sig">--</div>
+                <div class="metric-label">Kernel Signal</div>
+            </div>
+        </div>
+        <div class="console-stream" id="console-stream">[SUPERVISOR ACTIVE] Waiting for untrusted code dispatch...</div>
+    </div>
+</div>
+<script>
+const templates = {
+    1: `#include <stdio.h>\n\nint main() {\n    printf("Executing matrix dot-product...\\n");\n    long acc = 0;\n    for(int i = 0; i < 20000000; i++) acc += (i % 7);\n    printf("Computation finished safely. Result: %ld\\n", acc);\n    return 0;\n}`,
+    2: `#include <stdio.h>\n\nint main() {\n    printf("Starting infinite compute loop to starve server CPU...\\n");\n    while(1) {}\n    return 0;\n}`,
+    3: `#include <stdio.h>\n#include <stdlib.h>\n\nint main() {\n    printf("Attempting to allocate 256 MB on a 64 MB ceiling...\\n");\n    size_t sz = 256 * 1024 * 1024;\n    volatile char *buf = (volatile char *)malloc(sz);\n    if (!buf) {\n        printf("Hardware memory quota caught: malloc returned NULL\\n");\n        return 104;\n    }\n    for (size_t i = 0; i < sz; i += 4096) {\n        buf[i] = (char)0xEE;\n    }\n    return 0;\n}`,
+    4: `#include <stdio.h>\n\nint main() {\n    printf("Violating memory boundaries (dereferencing NULL)...\\n");\n    int *ptr = NULL;\n    *ptr = 0xDEADBEEF;\n    return 0;\n}`,
+    5: `#include <stdio.h>\n\nint main() {\n    printf("Executing arithmetic operation with zero divisor...\\n");\n    volatile int a = 500;\n    volatile int b = 0;\n    volatile int c = a / b;\n    return 0;\n}`,
+    6: `#include <stdio.h>\n#include <unistd.h>\n\nint main() {\n    printf("Sleeping for 30s to evade CPU limits...\\n");\n    sleep(30); // Consumes 0.0s CPU, stalls judge\n    return 0;\n}`
+};
+
+function setPreset(num) {
+    document.getElementById('code-input').value = templates[num];
+}
+setPreset(1);
+
+async function executeUntrustedCode() {
+    const code = document.getElementById('code-input').value;
+    const cpuSec = document.getElementById('cpu-sec').value;
+    const memMb = document.getElementById('mem-mb').value;
+    const stream = document.getElementById('console-stream');
+    const badge = document.getElementById('status-badge');
+
+    badge.className = "badge badge-amber";
+    badge.innerText = "RUNNING";
+    stream.innerHTML += `\n>> [DISPATCH] Compiling & forking worker with RLIMIT_CPU=${cpuSec}s, RLIMIT_AS=${memMb}MB...`;
+
+    try {
+        const resp = await fetch('/api/run', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code, cpuLimit: cpuSec, memLimit: memMb })
+        });
+        const result = await resp.json();
+        if (!result.success) {
+            badge.className = "badge badge-red";
+            badge.innerText = "COMPILE ERROR";
+            stream.innerHTML += `\n[ERROR] GCC Compilation Failed:\n${result.error}\n`;
+            return;
+        }
+        const data = result.data;
+        document.getElementById('metric-pid').innerText = data.child_pid;
+        document.getElementById('metric-time').innerText = data.elapsed_ms.toFixed(1) + " ms";
+
+        if (data.mode === "NORMAL_EXIT") {
+            document.getElementById('metric-sig').innerText = "Exit: " + data.code;
+            badge.className = (data.code === 0) ? "badge badge-green" : "badge badge-amber";
+            badge.innerText = (data.code === 0) ? "CLEAN EXIT" : "APP ERROR";
+        } else {
+            document.getElementById('metric-sig').innerText = "Sig " + data.signal;
+            badge.className = "badge badge-red";
+            badge.innerText = data.signal_name;
+        }
+
+        stream.innerHTML += `\n[SUPERVISOR HARVEST] Child PID ${data.child_pid} terminated.`;
+        stream.innerHTML += `\nKernel Verdict : ${data.verdict}`;
+        stream.innerHTML += `\nProcess Audit  : Active Lingering Zombies = ${data.zombies_active} (Clean Invariant Verified)\n`;
+        stream.scrollTop = stream.scrollHeight;
+    } catch (err) {
+        badge.className = "badge badge-red";
+        badge.innerText = "FAULT";
+        stream.innerHTML += `\n[FAULT] ${err.message}\n`;
+    }
+}
+</script>
+</body>
+</html>
